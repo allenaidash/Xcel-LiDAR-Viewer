@@ -80,23 +80,28 @@
 
         load3DTileset();
 
-        // --- DEVELOPER TOOL: Point Inspector on '1' + Left-Click ---
+        // --- DEVELOPER TOOL: Point Inspector on '1' + Left-Click (Robust Version) ---
 
-        // We need to manually track if the '1' key is pressed, since it's not a standard modifier.
+        // Get the canvas element to attach listeners directly to it, solving focus issues.
+        const canvas = viewer.scene.canvas;
+        // Make the canvas focusable to ensure it can receive keyboard events.
+        canvas.setAttribute("tabindex", 0);
+        canvas.focus(); // Set focus to the canvas to begin listening for keyboard events.
+
         let isOneKeyPressed = false;
-        document.addEventListener("keydown", (event) => {
+        canvas.addEventListener("keydown", (event) => {
             if (event.key === "1") {
                 isOneKeyPressed = true;
             }
         });
-        document.addEventListener("keyup", (event) => {
+        canvas.addEventListener("keyup", (event) => {
             if (event.key === "1") {
                 isOneKeyPressed = false;
             }
         });
 
         console.log("Hold the '1' key and left-click on points to inspect their properties in the console.");
-        const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+        const handler = new Cesium.ScreenSpaceEventHandler(canvas);
         handler.setInputAction(function (movement) {
             // Only run the inspector logic if the '1' key is currently held down.
             if (isOneKeyPressed) {
@@ -104,7 +109,8 @@
                 if (pickedFeature instanceof Cesium.Cesium3DTileFeature) {
                     console.log("--- Clicked Point Properties ---");
                     const propertyIds = pickedFeature.getPropertyIds();
-                    for (const propertyId of propertyIds) {
+                    for (let i = 0; i < propertyIds.length; i++) {
+                        const propertyId = propertyIds[i];
                         const value = pickedFeature.getProperty(propertyId);
                         console.log(`${propertyId}: ${value}`);
                     }
