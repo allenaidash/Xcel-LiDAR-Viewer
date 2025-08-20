@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Cesium Demo</title>
 
-  <!-- CesiumJS via CDN -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cesium@1.120/Build/Cesium/Widgets/widgets.css">
   <script src="https://cdn.jsdelivr.net/npm/cesium@1.120/Build/Cesium/Cesium.js"></script>
 
@@ -30,7 +29,8 @@
 
     // 2) Create the viewer
     const viewer = new Cesium.Viewer("cesiumContainer", {
-      terrain: Cesium.createWorldTerrain(),
+      // Corrected: use terrainProvider instead of terrain
+      terrainProvider: Cesium.createWorldTerrain(),
       animation: false,
       timeline: false
     });
