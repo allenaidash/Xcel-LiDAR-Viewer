@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="utf--8" />
+    <meta charset="utf-8" />
     <title>CesiumJS: Load 3D Tileset from Cesium ion</title>
     <script src="https://cesium.com/downloads/cesiumjs/releases/1.132/Build/Cesium/Cesium.js"></script>
     <link href="https://cesium.com/downloads/cesiumjs/releases/1.132/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
@@ -12,10 +12,27 @@
             width: 100%;
             height: 100%;
         }
+        #toolbar {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            padding: 5px;
+            background: rgba(42, 42, 42, 0.8);
+            border-radius: 5px;
+            z-index: 1;
+        }
+        #toolbar button {
+            margin: 2px;
+        }
     </style>
 </head>
 <body>
     <div id="cesiumContainer"></div>
+    <div id="toolbar">
+        <button id="rgbBtn">RGB Color</button>
+        <button id="classBtn">Classification</button>
+        <button id="intensityBtn">Intensity</button>
+    </div>
     <script type="module">
         // Your Cesium ion Access Token - REPLACE THIS WITH YOUR OWN TOKEN
         // You can get your token from https://ion.cesium.com/tokens
@@ -30,16 +47,17 @@
             baseLayerPicker: false, // Optional: Disable the base layer selection widget
         });
 
+        // Declare a variable to hold the tileset, so we can access it later.
+        let tileset;
+
         // Load your 3D Tileset from Cesium ion using its Asset ID
-        // REPLACE 'YOUR_3D_TILESET_ASSET_ID' with the ID of your 3D Tileset asset
         // You can find the asset ID on your Cesium ion My Assets page
         async function load3DTileset() {
             try {
                 const resource = await Cesium.IonResource.fromAssetId('3649149');
-                const tileset = await Cesium.Cesium3DTileset.fromUrl(resource);
+                tileset = await Cesium.Cesium3DTileset.fromUrl(resource);
                 viewer.scene.primitives.add(tileset);
 
-                // --- ADDITION START ---
                 // Fly to the specified coordinates after the tileset is added.
                 viewer.camera.flyTo({
                     // The coordinates are Longitude, Latitude, and Height (in meters).
@@ -50,7 +68,6 @@
                         roll: 0.0,
                     },
                 });
-                // --- ADDITION END ---
 
             } catch (error) {
                 console.error(`Error loading 3D Tileset: ${error}`);
@@ -58,6 +75,55 @@
         }
 
         load3DTileset();
+
+        // --- FEATURE: Point Cloud Styling ---
+
+        // Note: The following styles assume your point cloud data has 'classification'
+        // and 'intensity' attributes. If not, these buttons will not appear to work.
+
+        // Event listener for the "RGB Color" button
+        document.getElementById('rgbBtn').addEventListener('click', () => {
+            if (tileset) {
+                // Reset the style to show the default RGB colors of the point cloud.
+                tileset.style = new Cesium.Cesium3DTileStyle();
+            }
+        });
+
+        // Event listener for the "Classification" button
+        document.getElementById('classBtn').addEventListener('click', () => {
+            if (tileset) {
+                tileset.style = new Cesium.Cesium3DTileStyle({
+                    color: {
+                        // Style points based on the ASPRS LAS classification standard.
+                        conditions: [
+                            ["${classification} === 2", "color('saddlebrown')"], // Ground
+                            ["${classification} === 5", "color('darkgreen')"],  // High Vegetation
+                            ["${classification} === 6", "color('goldenrod')"],  // Building
+                            ["${classification} === 9", "color('darkblue')"],   // Water
+                            ["true", "color('white')"] // Default for other classes
+                        ]
+                    },
+                });
+            }
+        });
+
+        // Event listener for the "Intensity" button
+        document.getElementById('intensityBtn').addEventListener('click', () => {
+            if (tileset) {
+                tileset.style = new Cesium.Cesium3DTileStyle({
+                    color: {
+                        // Style points based on intensity, creating a color ramp.
+                        // This assumes intensity is normalized between 0.0 and 1.0.
+                        conditions: [
+                            ["${intensity} > 0.7", "color('red')"],
+                            ["${intensity} > 0.5", "color('yellow')"],
+                            ["${intensity} > 0.3", "color('lime')"],
+                            ["true", "color('blue')"]
+                        ]
+                    }
+                });
+            }
+        });
     </script>
 </body>
 </html>
