@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="utf-8" />
+    <meta charset="utf--8" />
     <title>CesiumJS: Load 3D Tileset from Cesium ion</title>
     <script src="https://cesium.com/downloads/cesiumjs/releases/1.132/Build/Cesium/Cesium.js"></script>
     <link href="https://cesium.com/downloads/cesiumjs/releases/1.132/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
@@ -38,6 +38,20 @@
                 const resource = await Cesium.IonResource.fromAssetId('3649149');
                 const tileset = await Cesium.Cesium3DTileset.fromUrl(resource);
                 viewer.scene.primitives.add(tileset);
+
+                // --- ADDITION START ---
+                // Fly to the specified coordinates after the tileset is added.
+                viewer.camera.flyTo({
+                    // The coordinates are Longitude, Latitude, and Height (in meters).
+                    destination: Cesium.Cartesian3.fromDegrees(-105.258588, 40.047429, 800),
+                    orientation: {
+                        heading: Cesium.Math.toRadians(0.0),
+                        pitch: Cesium.Math.toRadians(-45.0), // Look down at a 45-degree angle
+                        roll: 0.0,
+                    },
+                });
+                // --- ADDITION END ---
+
             } catch (error) {
                 console.error(`Error loading 3D Tileset: ${error}`);
             }
