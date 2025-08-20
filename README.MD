@@ -1,7 +1,7 @@
 Xcel-LIDAR-Viewer
 This repository hosts a simple CesiumJS application on GitHub Pages to visualize a LIDAR dataset from a Cesium ion asset.
 
-👉 Live demo: https://allenaidash.github.io/Xcel-LIDAR-Viewer/
+👉 Live demo: https://allenaidash.github.io/Xcel-LiDAR-Viewer/
 
 How it Works
 The site is a static index.html file located in the /docs folder of this repository.
