@@ -1,17 +1,29 @@
-# Cesium Demo on GitHub Pages
+Xcel-LIDAR-Viewer
+This repository hosts a simple CesiumJS application on GitHub Pages to visualize a LIDAR dataset from a Cesium ion asset.
 
-This repo hosts a simple CesiumJS viewer on **GitHub Pages**, loading a Cesium ion asset.
+👉 Live demo: https://allenaidash.github.io/Xcel-LIDAR-Viewer/
 
-👉 Live demo: [https://<your-username>.github.io/cesium-demo/](https://<your-username>.github.io/cesium-demo/)
+How it Works
+The site is a static index.html file located in the /docs folder of this repository.
 
----
+GitHub Pages is configured to serve the site directly from the /docs folder on the main branch.
 
-## How it works
-- The site is a static `index.html` located in the `docs/` folder.
-- GitHub Pages is configured to serve from the `/docs` folder.
-- CesiumJS is loaded directly from the CDN (`jsDelivr`).
-- The viewer connects to **Cesium ion** using an access token.
+CesiumJS is loaded via a Content Delivery Network (CDN), meaning no local installation is required.
 
----
+The viewer connects to Cesium ion to load a specific 3D Tiles dataset using an access token.
 
-## Repo structure
+Repository Structure
+├── docs/
+│   ├── index.html
+├── .gitignore
+├── LICENSE
+└── README.md
+Getting Started
+To run this demo locally or modify it:
+
+Clone the repository:
+
+git clone https://github.com/allenaidash/Xcel-LIDAR-Viewer.git
+Open the file: Open the index.html file located in the docs/ folder in a modern web browser.
+
+Note: You will need to replace the Cesium.Ion.defaultAccessToken and the fromIonAssetId with your own details to load a different asset.
