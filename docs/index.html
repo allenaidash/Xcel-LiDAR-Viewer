@@ -77,11 +77,27 @@
 
         load3DTileset();
 
+        // --- DEVELOPER TOOL: Add a click handler to inspect point properties ---
+        console.log("Click on points in the scene to inspect their properties in the console.");
+        const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+        handler.setInputAction(function (movement) {
+            const pickedFeature = viewer.scene.pick(movement.position);
+            if (pickedFeature instanceof Cesium.Cesium3DTileFeature) {
+                console.log("--- Clicked Point Properties ---");
+                const propertyIds = pickedFeature.getPropertyIds();
+                for (let i = 0; i < propertyIds.length; i++) {
+                    const propertyId = propertyIds[i];
+                    const value = pickedFeature.getProperty(propertyId);
+                    console.log(`${propertyId}: ${value}`);
+                }
+                console.log("------------------------------");
+            }
+        }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+
         // --- Point Cloud Styling Event Listeners ---
 
         document.getElementById('rgbBtn').addEventListener('click', () => {
             if (tileset) {
-                // Reset the style to show the default RGB colors of the point cloud.
                 tileset.style = new Cesium.Cesium3DTileStyle();
             }
         });
@@ -90,16 +106,12 @@
             if (tileset) {
                 tileset.style = new Cesium.Cesium3DTileStyle({
                     color: {
-                        // Style points based on the ASPRS LAS classification standard.
+                        // Updated to match the classes found in your LAS file.
                         conditions: [
-                            ["${classification} === 1", "color('black')"], // Road / ground
-                            ["${classification} === 2", "color('brown')"], // Low Vegetation
-                            ["${classification} === 21", "color('red')"],  // Utilites
-                            ["${classification} === 4", "color('lightgreen')"], // High Vegetation
-                            ["${classification} === 5", "color('darkgreen')"],  // High Vegetation
-                            ["${classification} === 6", "color('goldenrod')"],  // Building
-                            ["${classification} === 9", "color('darkblue')"],   // Water
-                            ["true", "color('white')"] // Default for other classes
+                            ["${classification} === 5", "color('darkgreen')"],      // High Vegetation
+                            ["${classification} === 21", "color('magenta')"],       // Your custom class
+                            ["${classification} === 1", "color('lightgray')"],      // Unclassified
+                            ["true", "color('white')"] // Fallback for any other class
                         ]
                     },
                 });
@@ -110,12 +122,14 @@
             if (tileset) {
                 tileset.style = new Cesium.Cesium3DTileStyle({
                     color: {
-                        // Style points based on intensity, creating a color ramp.
-                        // This assumes intensity is normalized between 0.0 and 1.0.
+                        // NOTE: The values below (e.g., 50000, 30000) are EXAMPLES for
+                        // non-normalized intensity. Use the inspector tool to find the actual
+                        // intensity range for your data and adjust these numbers to create
+                        // a good color ramp.
                         conditions: [
-                            ["${intensity} > 0.7", "color('red')"],
-                            ["${intensity} > 0.5", "color('yellow')"],
-                            ["${intensity} > 0.3", "color('lime')"],
+                            ["${intensity} > 50000", "color('red')"],
+                            ["${intensity} > 30000", "color('yellow')"],
+                            ["${intensity} > 10000", "color('lime')"],
                             ["true", "color('blue')"]
                         ]
                     }
