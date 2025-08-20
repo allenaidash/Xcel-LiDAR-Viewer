@@ -25,4 +25,6 @@ The site is a static `index.html` file located in the `/docs` folder of this rep
 *   **ScreenSpaceEventHandler**: The Point Inspector tool is implemented using a `ScreenSpaceEventHandler` to capture mouse clicks on the scene.
 
 ## Repository Structure
-
+├── docs/ 
+    └── index.html 
+    └── README.md
