@@ -80,21 +80,36 @@
 
         load3DTileset();
 
-        // --- DEVELOPER TOOL: Add a click handler to inspect point properties ---
-        // This is the best way to find the correct classification codes and intensity ranges.
-        console.log("Click on points in the scene to inspect their properties in the console.");
+        // --- DEVELOPER TOOL: Point Inspector on '1' + Left-Click ---
+
+        // We need to manually track if the '1' key is pressed, since it's not a standard modifier.
+        let isOneKeyPressed = false;
+        document.addEventListener("keydown", (event) => {
+            if (event.key === "1") {
+                isOneKeyPressed = true;
+            }
+        });
+        document.addEventListener("keyup", (event) => {
+            if (event.key === "1") {
+                isOneKeyPressed = false;
+            }
+        });
+
+        console.log("Hold the '1' key and left-click on points to inspect their properties in the console.");
         const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
         handler.setInputAction(function (movement) {
-            const pickedFeature = viewer.scene.pick(movement.position);
-            if (pickedFeature instanceof Cesium.Cesium3DTileFeature) {
-                console.log("--- Clicked Point Properties ---");
-                const propertyIds = pickedFeature.getPropertyIds();
-                for (let i = 0; i < propertyIds.length; i++) {
-                    const propertyId = propertyIds[i];
-                    const value = pickedFeature.getProperty(propertyId);
-                    console.log(`${propertyId}: ${value}`);
+            // Only run the inspector logic if the '1' key is currently held down.
+            if (isOneKeyPressed) {
+                const pickedFeature = viewer.scene.pick(movement.position);
+                if (pickedFeature instanceof Cesium.Cesium3DTileFeature) {
+                    console.log("--- Clicked Point Properties ---");
+                    const propertyIds = pickedFeature.getPropertyIds();
+                    for (const propertyId of propertyIds) {
+                        const value = pickedFeature.getProperty(propertyId);
+                        console.log(`${propertyId}: ${value}`);
+                    }
+                    console.log("------------------------------");
                 }
-                console.log("------------------------------");
             }
         }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
 
