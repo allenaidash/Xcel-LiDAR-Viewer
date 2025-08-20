@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8" />
-    <title>CesiumJS: Dynamic 3D Tileset Styling</title>
+    <title>CesiumJS: 3D Tileset Styling</title>
     <script src="https://cesium.com/downloads/cesiumjs/releases/1.132/Build/Cesium/Cesium.js"></script>
     <link href="https://cesium.com/downloads/cesiumjs/releases/1.132/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
     <style>
@@ -13,7 +13,6 @@
             height: 100%;
             overflow: hidden; /* Prevents scrollbars */
         }
-        /* This CSS block defines the toolbar's appearance and position */
         #toolbar {
             position: absolute;
             top: 10px;
@@ -33,8 +32,12 @@
 <body>
     <div id="cesiumContainer"></div>
 
-    <!-- The toolbar is now empty. JavaScript will add buttons dynamically. -->
-    <div id="toolbar"></div>
+    <!-- Define the toolbar buttons directly in HTML for reliability -->
+    <div id="toolbar">
+        <button id="rgbBtn">RGB Color</button>
+        <button id="classBtn">Classification</button>
+        <button id="intensityBtn">Intensity</button>
+    </div>
 
     <script type="module">
         // Your Cesium ion Access Token
@@ -48,20 +51,14 @@
             baseLayerPicker: false,
         });
 
+        let tileset;
+
         // Load your 3D Tileset from Cesium ion using its Asset ID
         async function load3DTileset() {
             try {
                 const resource = await Cesium.IonResource.fromAssetId('3649149');
-                const tileset = await Cesium.Cesium3DTileset.fromUrl(resource);
+                tileset = await Cesium.Cesium3DTileset.fromUrl(resource);
                 viewer.scene.primitives.add(tileset);
-
-                // Wait for the tileset to be ready before accessing its properties.
-                // This is the key step for dynamic styling.
-                await tileset.readyPromise;
-
-                // Dynamically create the UI and styling options based on
-                // the properties found in the tileset.
-                createStylingUI(tileset);
 
                 // Fly to the specified coordinates after the tileset is added.
                 viewer.camera.flyTo({
@@ -80,69 +77,51 @@
 
         load3DTileset();
 
-        // --- DYNAMIC STYLING FEATURE ---
+        // --- Point Cloud Styling Event Listeners ---
 
-        function createStylingUI(tileset) {
-            const toolbar = document.getElementById('toolbar');
-            const properties = tileset.properties;
-
-            // Add a button to reset to the default RGB view
-            const rgbButton = document.createElement('button');
-            rgbButton.textContent = 'RGB Color';
-            rgbButton.onclick = () => {
+        document.getElementById('rgbBtn').addEventListener('click', () => {
+            if (tileset) {
+                // Reset the style to show the default RGB colors of the point cloud.
                 tileset.style = new Cesium.Cesium3DTileStyle();
-            };
-            toolbar.appendChild(rgbButton);
-
-            // Check if the 'classification' property exists in the tileset
-            if (Cesium.defined(properties) && Cesium.defined(properties.classification)) {
-                const classButton = document.createElement('button');
-                classButton.textContent = 'Classification';
-                classButton.onclick = () => {
-                    const classificationCodes = properties.classification.values;
-                    const conditions = [];
-                    // Define a color palette to cycle through for different classes
-                    const colorPalette = ['saddlebrown', 'darkgreen', 'goldenrod', 'darkblue', 'red', 'purple', 'orange'];
-
-                    // Dynamically create a style condition for each unique classification code
-                    classificationCodes.forEach((code, index) => {
-                        const color = colorPalette[index % colorPalette.length];
-                        conditions.push([`\${classification} === ${code}`, `color('${color}')`]);
-                    });
-
-                    conditions.push(['true', `color('white')`]); // Fallback for any other case
-
-                    tileset.style = new Cesium.Cesium3DTileStyle({
-                        color: { conditions: conditions }
-                    });
-                };
-                toolbar.appendChild(classButton);
             }
+        });
 
-            // Check if the 'intensity' property exists in the tileset
-            if (Cesium.defined(properties) && Cesium.defined(properties.intensity)) {
-                const intensityButton = document.createElement('button');
-                intensityButton.textContent = 'Intensity';
-                intensityButton.onclick = () => {
-                    // Use the actual min/max from the tileset for a precise color ramp
-                    const min = properties.intensity.minimum;
-                    const max = properties.intensity.maximum;
-                    const range = max - min;
-
-                    tileset.style = new Cesium.Cesium3DTileStyle({
-                        color: {
-                            conditions: [
-                                [`\${intensity} > ${min + range * 0.7}`, "color('red')"],
-                                [`\${intensity} > ${min + range * 0.5}`, "color('yellow')"],
-                                [`\${intensity} > ${min + range * 0.3}`, "color('lime')"],
-                                ['true', "color('blue')"]
-                            ]
-                        }
-                    });
-                };
-                toolbar.appendChild(intensityButton);
+        document.getElementById('classBtn').addEventListener('click', () => {
+            if (tileset) {
+                tileset.style = new Cesium.Cesium3DTileStyle({
+                    color: {
+                        // Style points based on the ASPRS LAS classification standard.
+                        conditions: [
+                            ["${classification} === 1", "color('black')"], // Road / ground
+                            ["${classification} === 2", "color('brown')"], // Low Vegetation
+                            ["${classification} === 21", "color('red')"],  // Utilites
+                            ["${classification} === 4", "color('lightgreen')"], // High Vegetation
+                            ["${classification} === 5", "color('darkgreen')"],  // High Vegetation
+                            ["${classification} === 6", "color('goldenrod')"],  // Building
+                            ["${classification} === 9", "color('darkblue')"],   // Water
+                            ["true", "color('white')"] // Default for other classes
+                        ]
+                    },
+                });
             }
-        }
+        });
+
+        document.getElementById('intensityBtn').addEventListener('click', () => {
+            if (tileset) {
+                tileset.style = new Cesium.Cesium3DTileStyle({
+                    color: {
+                        // Style points based on intensity, creating a color ramp.
+                        // This assumes intensity is normalized between 0.0 and 1.0.
+                        conditions: [
+                            ["${intensity} > 0.7", "color('red')"],
+                            ["${intensity} > 0.5", "color('yellow')"],
+                            ["${intensity} > 0.3", "color('lime')"],
+                            ["true", "color('blue')"]
+                        ]
+                    }
+                });
+            }
+        });
     </script>
 </body>
 </html>
