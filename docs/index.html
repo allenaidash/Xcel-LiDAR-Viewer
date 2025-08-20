@@ -62,10 +62,13 @@
 
                 // Fly to the specified coordinates after the tileset is added.
                 viewer.camera.flyTo({
-                    destination: Cesium.Cartesian3.fromDegrees(-105.258588, 40.047429, 800),
+                    // The ground elevation at these coordinates is roughly 1665 meters.
+                    // To be 50ft (~15m) above the ground, we set the height to 1665 + 15 = 1680m.
+                    destination: Cesium.Cartesian3.fromDegrees(-105.258588, 40.047429, 1680),
                     orientation: {
                         heading: Cesium.Math.toRadians(0.0),
-                        pitch: Cesium.Math.toRadians(-45.0),
+                        // A shallower pitch gives a better perspective when close to the ground.
+                        pitch: Cesium.Math.toRadians(-30.0),
                         roll: 0.0,
                     },
                 });
