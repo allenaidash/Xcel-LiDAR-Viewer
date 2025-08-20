@@ -81,6 +81,7 @@
         load3DTileset();
 
         // --- DEVELOPER TOOL: Add a click handler to inspect point properties ---
+        // This is the best way to find the correct classification codes and intensity ranges.
         console.log("Click on points in the scene to inspect their properties in the console.");
         const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
         handler.setInputAction(function (movement) {
