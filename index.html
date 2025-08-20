@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Cesium Demo</title>
+
+  <!-- CesiumJS via CDN -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cesium@1.120/Build/Cesium/Widgets/widgets.css">
+  <script src="https://cdn.jsdelivr.net/npm/cesium@1.120/Build/Cesium/Cesium.js"></script>
+
+  <style>
+    html, body, #cesiumContainer {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background: #000;
+    }
+  </style>
+</head>
+<body>
+  <div id="cesiumContainer"></div>
+
+  <script>
+    // 1) Cesium ion token (use a restricted one after testing)
+    Cesium.Ion.defaultAccessToken =
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIzOWZkYjU5OC1iZjkwLTQ2MDItYjY2YS1mN2U5NTI4NzhjZTAiLCJpZCI6MzMzMTI1LCJpYXQiOjE3NTU2NDIxMzl9.v5-dIRkNVV9oNiWl4aJ1iHyQVTiYHSOtK7LqU8KJgE0";
+
+    // 2) Create the viewer
+    const viewer = new Cesium.Viewer("cesiumContainer", {
+      terrain: Cesium.createWorldTerrain(),
+      animation: false,
+      timeline: false
+    });
+
+    // 3) Load your ion asset (3D Tiles example)
+    (async () => {
+      try {
+        const tileset = await Cesium.Cesium3DTileset.fromIonAssetId(3649149);
+        viewer.scene.primitives.add(tileset);
+        await viewer.zoomTo(tileset, new Cesium.HeadingPitchRange(0, -0.5, 0));
+      } catch (err) {
+        console.error("Asset failed to load:", err);
+        alert("Could not load asset. Check the console for details.");
+      }
+    })();
+  </script>
+</body>
+</html>
