@@ -27,6 +27,11 @@
             padding: 5px 10px;
             cursor: pointer;
         }
+        #toolbar button.active-tool {
+            background-color: #4CAF50; /* Green */
+            color: white;
+            border-color: #4CAF50;
+        }
         .slider-container {
             padding: 5px;
             display: flex;
@@ -42,6 +47,7 @@
         <button id="rgbBtn">RGB Color</button>
         <button id="classBtn">Classification</button>
         <button id="intensityBtn">Intensity</button>
+        <button id="inspectorBtn">Inspect Points</button>
         <div class="slider-container">
             <label for="pointSizeSlider" style="color: white; margin-right: 10px;">Point Size:</label>
             <input type="range" min="1" max="10" value="2" id="pointSizeSlider">
@@ -90,43 +96,41 @@
 
         load3DTileset();
 
-        // --- DEVELOPER TOOL: Point Inspector on '1' + Left-Click ---
+        // --- Global State Variables ---
+        let currentPointSize = 2; // Default point size from the slider's initial value.
+        let isInspectorActive = false;
 
-        // Get a reference to the camera controller to disable/enable it.
-        const sscController = viewer.scene.screenSpaceCameraController;
-        const canvas = viewer.scene.canvas;
-        canvas.setAttribute("tabindex", 0); // Make canvas focusable
-        canvas.focus();
-
-        let isOneKeyPressed = false;
-        canvas.addEventListener("keydown", (event) => {
-            if (event.key === "1") {
-                isOneKeyPressed = true;
-                // Disable camera controls to give the inspector exclusive priority.
-                sscController.enableInputs = false;
-            }
-        });
-        canvas.addEventListener("keyup", (event) => {
-            if (event.key === "1") {
-                isOneKeyPressed = false;
-                // Re-enable camera controls when the key is released.
-                sscController.enableInputs = true;
-            }
+        // --- DEVELOPER TOOL: Point Inspector activated by a button ---
+        const inspectorBtn = document.getElementById('inspectorBtn');
+        inspectorBtn.addEventListener('click', () => {
+            isInspectorActive = !isInspectorActive; // Toggle the mode
+            inspectorBtn.classList.toggle('active-tool', isInspectorActive);
+            inspectorBtn.textContent = isInspectorActive ? "Inspect (ON)" : "Inspect Points";
+            console.log(`Inspector mode is now ${isInspectorActive ? 'ON' : 'OFF'}.`);
         });
 
-        console.log("Hold the '1' key and left-click on points to inspect their properties in the console.");
-        const handler = new Cesium.ScreenSpaceEventHandler(canvas);
+        console.log("Click the 'Inspect Points' button to toggle inspector mode.");
+        const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
         handler.setInputAction(function (movement) {
-            if (isOneKeyPressed) {
+            // Only run the inspector logic if the mode is active.
+            if (isInspectorActive) {
                 const pickedFeature = viewer.scene.pick(movement.position);
                 if (pickedFeature instanceof Cesium.Cesium3DTileFeature) {
                     console.log("--- Clicked Point Properties ---");
                     const propertyIds = pickedFeature.getPropertyIds();
-                    for (const propertyId of propertyIds) {
+                    for (let i = 0; i < propertyIds.length; i++) {
+                        const propertyId = propertyIds[i];
                         const value = pickedFeature.getProperty(propertyId);
                         console.log(`${propertyId}: ${value}`);
                     }
                     console.log("------------------------------");
+                } else {
+                    // If the user clicks empty space while in inspector mode,
+                    // it's good practice to turn it off to avoid confusion.
+                    isInspectorActive = false;
+                    inspectorBtn.classList.remove('active-tool');
+                    inspectorBtn.textContent = "Inspect Points";
+                    console.log("Inspector mode turned OFF (clicked empty space).");
                 }
             }
         }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
@@ -139,15 +143,11 @@
             if (!tileset) {
                 return;
             }
-            const newSize = Number(event.target.value);
-            pointSizeValue.textContent = newSize;
+            currentPointSize = Number(event.target.value);
+            pointSizeValue.textContent = currentPointSize;
 
-            // Get the current style, or create a new one if it doesn't exist.
-            // This preserves the existing color styling.
             const currentStyle = tileset.style || new Cesium.Cesium3DTileStyle();
-            currentStyle.pointSize = newSize;
-
-            // Apply the updated style.
+            currentStyle.pointSize = currentPointSize;
             tileset.style = currentStyle;
         });
 
@@ -155,7 +155,9 @@
 
         document.getElementById('rgbBtn').addEventListener('click', () => {
             if (tileset) {
-                tileset.style = new Cesium.Cesium3DTileStyle();
+                tileset.style = new Cesium.Cesium3DTileStyle({
+                    pointSize: currentPointSize
+                });
             }
         });
 
@@ -171,6 +173,7 @@
                             ["true", "color('white')"] // Fallback for any other class
                         ]
                     },
+                    pointSize: currentPointSize
                 });
             }
         });
@@ -188,8 +191,9 @@
                             ["${intensity} > 30000", "color('yellow')"],
                             ["${intensity} > 10000", "color('lime')"],
                             ["true", "color('blue')"]
-                        ]
-                    }
+                        ],
+                    },
+                    pointSize: currentPointSize
                 });
             }
         });
