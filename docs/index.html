@@ -37,9 +37,9 @@
 <body>
     <div id="cesiumContainer"></div>
 
+    <!-- Define the toolbar buttons directly in HTML for reliability -->
     <div id="toolbar">
         <button id="rgbBtn">RGB Color</button>
-        <button id="classBtn">Classification</button>
         <button id="toggleAssetBtn">Toggle Asset (All Data)</button>
         <div class="slider-container">
             <label for="pointSizeSlider" style="color: white; margin-right: 10px;">Point Size:</label>
@@ -146,33 +146,6 @@
         document.getElementById('rgbBtn').addEventListener('click', () => {
             if (activeTileset) {
                 activeTileset.style = new Cesium.Cesium3DTileStyle({
-                    pointSize: currentPointSize
-                });
-            }
-        });
-
-        document.getElementById('classBtn').addEventListener('click', () => {
-            if (activeTileset) {
-                activeTileset.style = new Cesium.Cesium3DTileStyle({
-                    color: {
-                        // This is an expanded list based on ASPRS LAS 1.4 standard.
-                        conditions: [
-                            // Corrected: Use _classification instead of classification
-                            ["${_classification} === 2", "color('saddlebrown')"],    // Ground
-                            ["${_classification} === 3", "color('lawngreen')"],      // Low Vegetation
-                            ["${_classification} === 4", "color('green')"],          // Medium Vegetation
-                            ["${_classification} === 5", "color('darkgreen')"],      // High Vegetation
-                            ["${_classification} === 6", "color('goldenrod')"],      // Building
-                            ["${_classification} === 7", "color('red')"],            // Low Point (noise)
-                            ["${_classification} === 9", "color('darkblue')"],       // Water
-                            ["${_classification} === 11", "color('dimgray')"],       // Road Surface
-                            ["${_classification} === 14", "color('darkorange')"],    // Wire - Conductor
-                            ["${_classification} === 15", "color('darkred')"],       // Transmission Tower
-                            ["${_classification} === 17", "color('darkkhaki')"],     // Bridge Deck
-                            ["${_classification} === 21", "color('magenta')"],       // Your custom class
-                            ["true", "color('lightgray')"] // Default for Unclassified and others
-                        ]
-                    },
                     pointSize: currentPointSize
                 });
             }
