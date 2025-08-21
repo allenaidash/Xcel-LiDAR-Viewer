@@ -32,40 +32,6 @@
             color: white;
             border-color: #4CAF50;
         }
-        .slider-container {<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="utf-8" />
-    <title>CesiumJS: 3D Tileset Styling</title>
-    <script src="https://cesium.com/downloads/cesiumjs/releases/1.132/Build/Cesium/Cesium.js"></script>
-    <link href="https://cesium.com/downloads/cesiumjs/releases/1.132/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
-    <style>
-        html, body, #cesiumContainer {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            overflow: hidden; /* Prevents scrollbars */
-        }
-        #toolbar {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            padding: 5px;
-            background: rgba(42, 42, 42, 0.8);
-            border-radius: 5px;
-            z-index: 1; /* Ensures it's on top of the Cesium widget */
-        }
-        #toolbar button {
-            margin: 2px;
-            padding: 5px 10px;
-            cursor: pointer;
-        }
-        #toolbar button.active-tool {
-            background-color: #4CAF50; /* Green */
-            color: white;
-            border-color: #4CAF50;
-        }
         .slider-container {
             padding: 5px;
             display: flex;
@@ -178,20 +144,15 @@
             if (!tileset) {
                 return;
             }
-            currentPointSize = Number(event.target.value); // Update the global size variable
+            currentPointSize = Number(event.target.value);
             pointSizeValue.textContent = currentPointSize;
 
-            // Build a new style object from scratch to guarantee an update.
-            const newStyleOptions = {
-                pointSize: currentPointSize,
-            };
-
-            // If a color style is already active, preserve it.
-            if (tileset.style && tileset.style.color) {
-                newStyleOptions.color = tileset.style.color;
+            // If a style is not yet defined, create a default one.
+            if (!tileset.style) {
+                tileset.style = new Cesium.Cesium3DTileStyle();
             }
-
-            tileset.style = new Cesium.Cesium3DTileStyle(newStyleOptions);
+            // Directly set the point size on the current style.
+            tileset.style.pointSize = currentPointSize;
         });
 
         // --- Point Cloud Styling Event Listeners ---
@@ -228,194 +189,3 @@
                         // NOTE: The values below (e.g., 50000, 30000) are EXAMPLES for
                         // non-normalized intensity. Use the inspector tool to find the actual
                         // intensity range for your data and adjust these numbers to create
-                        // a good color ramp.
-                        conditions: [
-                            ["${intensity} > 50000", "color('red')"],
-                            ["${intensity} > 30000", "color('yellow')"],
-                            ["${intensity} > 10000", "color('lime')"],
-                            ["true", "color('blue')"]
-                        ],
-                    },
-                    pointSize: currentPointSize
-                });
-            }
-        });
-    </script>
-</body>
-</html>
-
-            padding: 5px;
-            display: flex;
-            align-items: center;
-        }
-    </style>
-</head>
-<body>
-    <div id="cesiumContainer"></div>
-
-    <!-- Define the toolbar buttons directly in HTML for reliability -->
-    <div id="toolbar">
-        <button id="rgbBtn">RGB Color</button>
-        <button id="classBtn">Classification</button>
-        <button id="intensityBtn">Intensity</button>
-        <button id="inspectorBtn">Inspect Points</button>
-        <div class="slider-container">
-            <label for="pointSizeSlider" style="color: white; margin-right: 10px;">Point Size:</label>
-            <input type="range" min="1" max="10" value="2" id="pointSizeSlider">
-            <span id="pointSizeValue" style="color: white; margin-left: 10px;">2</span>
-        </div>
-    </div>
-
-    <script type="module">
-        // Your Cesium ion Access Token
-        Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIzOWZkYjU5OC1iZjkwLTQ2MDItYjY2YS1mN2U5NTI4NzhjZTAiLCJpZCI6MzMzMTI1LCJpYXQiOjE3NTU2NDIxMzl9.v5-dIRkNVV9oNiWl4aJ1iHyQVTiYHSOtK7LqU8KJgE0';
-
-        const viewer = new Cesium.Viewer('cesiumContainer', {
-            terrain: Cesium.Terrain.fromWorldTerrain(),
-            baseLayer: Cesium.ImageryLayer.fromWorldImagery({
-                style: Cesium.IonWorldImageryStyle.AERIAL_WITH_LABELS,
-            }),
-            baseLayerPicker: false,
-        });
-
-        let tileset;
-
-        // Load your 3D Tileset from Cesium ion using its Asset ID
-        async function load3DTileset() {
-            try {
-                const resource = await Cesium.IonResource.fromAssetId('3649149');
-                tileset = await Cesium.Cesium3DTileset.fromUrl(resource);
-                viewer.scene.primitives.add(tileset);
-
-                // Fly to the specified coordinates after the tileset is added.
-                viewer.camera.flyTo({
-                    // The ground elevation at these coordinates is roughly 1665 meters.
-                    // To be 50ft (~15m) above the ground, we set the height to 1665 + 15 = 1680m.
-                    destination: Cesium.Cartesian3.fromDegrees(-105.258588, 40.047429, 1680),
-                    orientation: {
-                        heading: Cesium.Math.toRadians(0.0),
-                        // A shallower pitch gives a better perspective when close to the ground.
-                        pitch: Cesium.Math.toRadians(-30.0),
-                        roll: 0.0,
-                    },
-                });
-
-            } catch (error) {
-                console.error(`Error loading 3D Tileset: ${error}`);
-            }
-        }
-
-        load3DTileset();
-
-        // --- Global State Variables ---
-        let currentPointSize = 2; // Default point size from the slider's initial value.
-        let isInspectorActive = false;
-
-        // --- DEVELOPER TOOL: Point Inspector activated by a button ---
-        const inspectorBtn = document.getElementById('inspectorBtn');
-        inspectorBtn.addEventListener('click', () => {
-            isInspectorActive = !isInspectorActive; // Toggle the mode
-            inspectorBtn.classList.toggle('active-tool', isInspectorActive);
-            inspectorBtn.textContent = isInspectorActive ? "Inspect (ON)" : "Inspect Points";
-            console.log(`Inspector mode is now ${isInspectorActive ? 'ON' : 'OFF'}.`);
-        });
-
-        console.log("Click the 'Inspect Points' button to toggle inspector mode.");
-        const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
-        handler.setInputAction(function (movement) {
-            // Only run the inspector logic if the mode is active.
-            if (isInspectorActive) {
-                // Use drillPick to get a list of all features under the cursor.
-                const pickedObjects = viewer.scene.drillPick(movement.position);
-                console.log("Picked objects:", pickedObjects); // Log for debugging.
-
-                // Find the first point cloud feature in the list.
-                const pointFeature = pickedObjects.find(
-                    (o) => o.primitive instanceof Cesium.Cesium3DTileset && o.content instanceof Cesium.Pointcloud_i3dm
-                );
-
-                if (pointFeature) {
-                    console.log("--- Point Properties ---");
-                    const propertyIds = pointFeature.getPropertyIds();
-                    for (const propertyId of propertyIds) {
-                        const value = pointFeature.getProperty(propertyId);
-                        console.log(`${propertyId}: ${value}`);
-                    }
-                    console.log("------------------------");
-                }
-            }
-        }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
-
-        // --- FEATURE: Point Size Slider ---
-        const pointSizeSlider = document.getElementById('pointSizeSlider');
-        const pointSizeValue = document.getElementById('pointSizeValue');
-
-        pointSizeSlider.addEventListener('input', (event) => {
-            if (!tileset) {
-                return;
-            }
-            currentPointSize = Number(event.target.value); // Update the global size variable
-            pointSizeValue.textContent = currentPointSize;
-
-            // Build a new style object from scratch to guarantee an update.
-            const newStyleOptions = {
-                pointSize: currentPointSize,
-            };
-
-            // If a color style is already active, preserve it.
-            if (tileset.style && tileset.style.color) {
-                newStyleOptions.color = tileset.style.color;
-            }
-
-            tileset.style = new Cesium.Cesium3DTileStyle(newStyleOptions);
-        });
-
-        // --- Point Cloud Styling Event Listeners ---
-
-        document.getElementById('rgbBtn').addEventListener('click', () => {
-            if (tileset) {
-                tileset.style = new Cesium.Cesium3DTileStyle({
-                    pointSize: currentPointSize
-                });
-            }
-        });
-
-        document.getElementById('classBtn').addEventListener('click', () => {
-            if (tileset) {
-                tileset.style = new Cesium.Cesium3DTileStyle({
-                    color: {
-                        // Updated to match the classes found in your LAS file.
-                        conditions: [
-                            ["${classification} === 5", "color('darkgreen')"],      // High Vegetation
-                            ["${classification} === 21", "color('magenta')"],       // Your custom class
-                            ["${classification} === 1", "color('lightgray')"],      // Unclassified
-                            ["true", "color('white')"] // Fallback for any other class
-                        ]
-                    },
-                    pointSize: currentPointSize
-                });
-            }
-        });
-
-        document.getElementById('intensityBtn').addEventListener('click', () => {
-            if (tileset) {
-                tileset.style = new Cesium.Cesium3DTileStyle({
-                    color: {
-                        // NOTE: The values below (e.g., 50000, 30000) are EXAMPLES for
-                        // non-normalized intensity. Use the inspector tool to find the actual
-                        // intensity range for your data and adjust these numbers to create
-                        // a good color ramp.
-                        conditions: [
-                            ["${intensity} > 50000", "color('red')"],
-                            ["${intensity} > 30000", "color('yellow')"],
-                            ["${intensity} > 10000", "color('lime')"],
-                            ["true", "color('blue')"]
-                        ],
-                    },
-                    pointSize: currentPointSize
-                });
-            }
-        });
-    </script>
-</body>
-</html>
