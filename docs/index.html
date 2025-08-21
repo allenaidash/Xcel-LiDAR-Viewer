@@ -114,23 +114,23 @@
         handler.setInputAction(function (movement) {
             // Only run the inspector logic if the mode is active.
             if (isInspectorActive) {
-                const pickedFeature = viewer.scene.pick(movement.position);
-                if (pickedFeature instanceof Cesium.Cesium3DTileFeature) {
-                    console.log("--- Clicked Point Properties ---");
-                    const propertyIds = pickedFeature.getPropertyIds();
-                    for (let i = 0; i < propertyIds.length; i++) {
-                        const propertyId = propertyIds[i];
-                        const value = pickedFeature.getProperty(propertyId);
+                // Use drillPick to get a list of all features under the cursor.
+                const pickedObjects = viewer.scene.drillPick(movement.position);
+                console.log("Picked objects:", pickedObjects); // Log for debugging.
+
+                // Find the first point cloud feature in the list.
+                const pointFeature = pickedObjects.find(
+                    (o) => o.primitive instanceof Cesium.Cesium3DTileset && o.content instanceof Cesium.Pointcloud_i3dm
+                );
+
+                if (pointFeature) {
+                    console.log("--- Point Properties ---");
+                    const propertyIds = pointFeature.getPropertyIds();
+                    for (const propertyId of propertyIds) {
+                        const value = pointFeature.getProperty(propertyId);
                         console.log(`${propertyId}: ${value}`);
                     }
-                    console.log("------------------------------");
-                } else {
-                    // If the user clicks empty space while in inspector mode,
-                    // it's good practice to turn it off to avoid confusion.
-                    isInspectorActive = false;
-                    inspectorBtn.classList.remove('active-tool');
-                    inspectorBtn.textContent = "Inspect Points";
-                    console.log("Inspector mode turned OFF (clicked empty space).");
+                    console.log("------------------------");
                 }
             }
         }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
