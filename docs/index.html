@@ -143,12 +143,20 @@
             if (!tileset) {
                 return;
             }
-            currentPointSize = Number(event.target.value);
+            currentPointSize = Number(event.target.value); // Update the global size variable
             pointSizeValue.textContent = currentPointSize;
 
-            const currentStyle = tileset.style || new Cesium.Cesium3DTileStyle();
-            currentStyle.pointSize = currentPointSize;
-            tileset.style = currentStyle;
+            // Build a new style object from scratch to guarantee an update.
+            const newStyleOptions = {
+                pointSize: currentPointSize,
+            };
+
+            // If a color style is already active, preserve it.
+            if (tileset.style && tileset.style.color) {
+                newStyleOptions.color = tileset.style.color;
+            }
+
+            tileset.style = new Cesium.Cesium3DTileStyle(newStyleOptions);
         });
 
         // --- Point Cloud Styling Event Listeners ---
