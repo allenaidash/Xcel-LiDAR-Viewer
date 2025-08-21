@@ -40,6 +40,7 @@
     <!-- Define the toolbar buttons directly in HTML for reliability -->
     <div id="toolbar">
         <button id="rgbBtn">RGB Color</button>
+        <button id="classificationBtn">Classification</button>
         <button id="toggleAssetBtn">Toggle Asset (All Data)</button>
         <div class="slider-container">
             <label for="pointSizeSlider" style="color: white; margin-right: 10px;">Point Size:</label>
@@ -67,7 +68,7 @@
             try {
                 // Load both assets concurrently
                 const [resource1, resource2] = await Promise.all([
-                    Cesium.IonResource.fromAssetId(3649149),
+                    Cesium.IonResource.fromAssetId(3654210),
                     Cesium.IonResource.fromAssetId(3654004)
                 ]);
 
@@ -147,6 +148,35 @@
             if (activeTileset) {
                 activeTileset.style = new Cesium.Cesium3DTileStyle({
                     pointSize: currentPointSize
+                });
+            }
+        });
+
+        // --- FEATURE: Classification Styling ---
+        document.getElementById('classificationBtn').addEventListener('click', () => {
+            if (activeTileset) {
+                activeTileset.style = new Cesium.Cesium3DTileStyle({
+                    color: {
+                        conditions: [
+                            // Unclassified (light gray)
+                            ["${Classification} === 1", "color('lightgray')"],
+                            // Ground (brown)
+                            ["${Classification} === 2", "color('#8B4513')"],
+                            // High Vegetation (green)
+                            ["${Classification} === 5", "color('forestgreen')"],
+                            // Building (orange)
+                            ["${Classification} === 6", "color('darkorange')"],
+                            // Low Point / Noise (purple)
+                            ["${Classification} === 7", "color('purple')"],
+                            // Utility Pole (gray)
+                            ["${Classification} === 21", "color('dimgray')"],
+                            // Utility Wire (red)
+                            ["${Classification} === 22", "color('red')"],
+                            // Default for everything else (white)
+                            ["true", "color('white')"],
+                        ]
+                    },
+                    pointSize: currentPointSize,
                 });
             }
         });
