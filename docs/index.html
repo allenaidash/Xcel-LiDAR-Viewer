@@ -27,11 +27,6 @@
             padding: 5px 10px;
             cursor: pointer;
         }
-        #toolbar button.active-tool {
-            background-color: #4CAF50; /* Green */
-            color: white;
-            border-color: #4CAF50;
-        }
         .slider-container {
             padding: 5px;
             display: flex;
@@ -47,7 +42,7 @@
         <button id="rgbBtn">RGB Color</button>
         <button id="classBtn">Classification</button>
         <button id="intensityBtn">Intensity</button>
-        <button id="inspectorBtn">Inspect Points</button>
+        <button id="toggleAssetBtn">Toggle Asset (1/2)</button>
         <div class="slider-container">
             <label for="pointSizeSlider" style="color: white; margin-right: 10px;">Point Size:</label>
             <input type="range" min="1" max="10" value="2" id="pointSizeSlider">
@@ -67,14 +62,29 @@
             baseLayerPicker: false,
         });
 
-        let tileset;
+        let tileset1, tileset2, activeTileset;
 
         // Load your 3D Tileset from Cesium ion using its Asset ID
         async function load3DTileset() {
             try {
-                const resource = await Cesium.IonResource.fromAssetId('3649149');
-                tileset = await Cesium.Cesium3DTileset.fromUrl(resource);
-                viewer.scene.primitives.add(tileset);
+                // Load both assets concurrently
+                const [resource1, resource2] = await Promise.all([
+                    Cesium.IonResource.fromAssetId(3649149),
+                    Cesium.IonResource.fromAssetId(3654004)
+                ]);
+
+                [tileset1, tileset2] = await Promise.all([
+                    Cesium.Cesium3DTileset.fromUrl(resource1),
+                    Cesium.Cesium3DTileset.fromUrl(resource2)
+                ]);
+
+                viewer.scene.primitives.add(tileset1);
+                viewer.scene.primitives.add(tileset2);
+
+                // Set the initial state: show the first tileset, hide the second
+                tileset1.show = true;
+                tileset2.show = false;
+                activeTileset = tileset1;
 
                 // Fly to the specified coordinates after the tileset is added.
                 viewer.camera.flyTo({
@@ -98,80 +108,54 @@
 
         // --- Global State Variables ---
         let currentPointSize = 2; // Default point size from the slider's initial value.
-        let isInspectorActive = false;
 
-        // --- DEVELOPER TOOL: Point Inspector activated by a button ---
-        const inspectorBtn = document.getElementById('inspectorBtn');
-        inspectorBtn.addEventListener('click', () => {
-            isInspectorActive = !isInspectorActive; // Toggle the mode
-            inspectorBtn.classList.toggle('active-tool', isInspectorActive);
-            inspectorBtn.textContent = isInspectorActive ? "Inspect (ON)" : "Inspect Points";
-            console.log(`Inspector mode is now ${isInspectorActive ? 'ON' : 'OFF'}.`);
-        });
+        // --- FEATURE: Toggle between assets ---
+        const toggleAssetBtn = document.getElementById('toggleAssetBtn');
+        toggleAssetBtn.addEventListener('click', () => {
+            if (tileset1 && tileset2) {
+                tileset1.show = !tileset1.show;
+                tileset2.show = !tileset2.show;
 
-        console.log("Click the 'Inspect Points' button to toggle inspector mode.");
-        const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
-        handler.setInputAction(function (movement) {
-            // Only run the inspector logic if the mode is active.
-            if (isInspectorActive) {
-                // Use drillPick to get a list of all features under the cursor.
-                const pickedObjects = viewer.scene.drillPick(movement.position);
-                console.log("Picked objects:", pickedObjects); // Log for debugging.
+                // Update the active tileset reference
+                activeTileset = tileset1.show ? tileset1 : tileset2;
 
-                // Find the first point cloud feature in the list.
-                const pointFeature = pickedObjects.find(
-                    (o) => o.primitive instanceof Cesium.Cesium3DTileset && o.content instanceof Cesium.Pointcloud_i3dm
-                );
-
-                if (pointFeature) {
-                    console.log("--- Point Properties ---");
-                    const propertyIds = pointFeature.getPropertyIds();
-                    for (const propertyId of propertyIds) {
-                        const value = pointFeature.getProperty(propertyId);
-                        console.log(`${propertyId}: ${value}`);
-                    }
-                    console.log("------------------------");
-                }
+                // Update button text for user feedback
+                toggleAssetBtn.textContent = `Toggle Asset (${activeTileset === tileset1 ? '1/2' : '2/2'})`;
             }
-        }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+        });
 
         // --- FEATURE: Point Size Slider ---
         const pointSizeSlider = document.getElementById('pointSizeSlider');
         const pointSizeValue = document.getElementById('pointSizeValue');
 
         pointSizeSlider.addEventListener('input', (event) => {
-            if (!tileset) {
+            if (!activeTileset) {
                 return;
             }
-            currentPointSize = Number(event.target.value); // Update the global size variable
+            currentPointSize = Number(event.target.value);
             pointSizeValue.textContent = currentPointSize;
 
-            // Build a new style object from scratch to guarantee an update.
-            const newStyleOptions = {
-                pointSize: currentPointSize,
-            };
-
-            // If a color style is already active, preserve it.
-            if (tileset.style && tileset.style.color) {
-                newStyleOptions.color = tileset.style.color;
+            // If a style is not yet defined, create a default one.
+            if (!activeTileset.style) {
+                activeTileset.style = new Cesium.Cesium3DTileStyle();
             }
-
-            tileset.style = new Cesium.Cesium3DTileStyle(newStyleOptions);
+            // Directly set the point size on the current style.
+            activeTileset.style.pointSize = currentPointSize;
         });
 
         // --- Point Cloud Styling Event Listeners ---
 
         document.getElementById('rgbBtn').addEventListener('click', () => {
-            if (tileset) {
-                tileset.style = new Cesium.Cesium3DTileStyle({
+            if (activeTileset) {
+                activeTileset.style = new Cesium.Cesium3DTileStyle({
                     pointSize: currentPointSize
                 });
             }
         });
 
         document.getElementById('classBtn').addEventListener('click', () => {
-            if (tileset) {
-                tileset.style = new Cesium.Cesium3DTileStyle({
+            if (activeTileset) {
+                activeTileset.style = new Cesium.Cesium3DTileStyle({
                     color: {
                         // Updated to match the classes found in your LAS file.
                         conditions: [
@@ -187,8 +171,8 @@
         });
 
         document.getElementById('intensityBtn').addEventListener('click', () => {
-            if (tileset) {
-                tileset.style = new Cesium.Cesium3DTileStyle({
+            if (activeTileset) {
+                activeTileset.style = new Cesium.Cesium3DTileStyle({
                     color: {
                         // NOTE: The values below (e.g., 50000, 30000) are EXAMPLES for
                         // non-normalized intensity. Use the inspector tool to find the actual
