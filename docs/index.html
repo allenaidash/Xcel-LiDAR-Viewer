@@ -118,17 +118,16 @@
                 const pickedObjects = viewer.scene.drillPick(movement.position);
                 console.log("Picked objects:", pickedObjects); // Log for debugging.
 
-                // Find the first object in the list that is a 3D Tile Feature.
-                // This is the correct and robust way to identify a point.
-                const pickedFeature = pickedObjects.find(
-                    (o) => o instanceof Cesium.Cesium3DTileFeature
+                // Find the first point cloud feature in the list.
+                const pointFeature = pickedObjects.find(
+                    (o) => o.primitive instanceof Cesium.Cesium3DTileset && o.content instanceof Cesium.Pointcloud_i3dm
                 );
 
-                if (pickedFeature) {
+                if (pointFeature) {
                     console.log("--- Point Properties ---");
-                    const propertyIds = pickedFeature.getPropertyIds();
+                    const propertyIds = pointFeature.getPropertyIds();
                     for (const propertyId of propertyIds) {
-                        const value = pickedFeature.getProperty(propertyId);
+                        const value = pointFeature.getProperty(propertyId);
                         console.log(`${propertyId}: ${value}`);
                     }
                     console.log("------------------------");
@@ -144,15 +143,20 @@
             if (!tileset) {
                 return;
             }
-            currentPointSize = Number(event.target.value);
+            currentPointSize = Number(event.target.value); // Update the global size variable
             pointSizeValue.textContent = currentPointSize;
 
-            // If a style is not yet defined, create a default one.
-            if (!tileset.style) {
-                tileset.style = new Cesium.Cesium3DTileStyle();
+            // Build a new style object from scratch to guarantee an update.
+            const newStyleOptions = {
+                pointSize: currentPointSize,
+            };
+
+            // If a color style is already active, preserve it.
+            if (tileset.style && tileset.style.color) {
+                newStyleOptions.color = tileset.style.color;
             }
-            // Directly set the point size on the current style.
-            tileset.style.pointSize = currentPointSize;
+
+            tileset.style = new Cesium.Cesium3DTileStyle(newStyleOptions);
         });
 
         // --- Point Cloud Styling Event Listeners ---
@@ -189,3 +193,18 @@
                         // NOTE: The values below (e.g., 50000, 30000) are EXAMPLES for
                         // non-normalized intensity. Use the inspector tool to find the actual
                         // intensity range for your data and adjust these numbers to create
+                        // a good color ramp.
+                        conditions: [
+                            ["${intensity} > 50000", "color('red')"],
+                            ["${intensity} > 30000", "color('yellow')"],
+                            ["${intensity} > 10000", "color('lime')"],
+                            ["true", "color('blue')"]
+                        ],
+                    },
+                    pointSize: currentPointSize
+                });
+            }
+        });
+    </script>
+</body>
+</html>
