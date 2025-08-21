@@ -42,7 +42,7 @@
         <button id="rgbBtn">RGB Color</button>
         <button id="classBtn">Classification</button>
         <button id="intensityBtn">Intensity</button>
-        <button id="toggleAssetBtn">Toggle Asset (1/2)</button>
+        <button id="toggleAssetBtn">Toggle Asset (All Data)</button>
         <div class="slider-container">
             <label for="pointSizeSlider" style="color: white; margin-right: 10px;">Point Size:</label>
             <input type="range" min="1" max="10" value="2" id="pointSizeSlider">
@@ -120,7 +120,7 @@
                 activeTileset = tileset1.show ? tileset1 : tileset2;
 
                 // Update button text for user feedback
-                toggleAssetBtn.textContent = `Toggle Asset (${activeTileset === tileset1 ? 'All Data' : 'Utilites'})`;
+                toggleAssetBtn.textContent = `Toggle Asset (${activeTileset === tileset1 ? 'All Data' : 'Utilities'})`;
             }
         });
 
@@ -157,13 +157,21 @@
             if (activeTileset) {
                 activeTileset.style = new Cesium.Cesium3DTileStyle({
                     color: {
-                        // Updated to match the classes found in your LAS file.
+                        // This is an expanded list based on ASPRS LAS 1.4 standard.
                         conditions: [
+                            ["${classification} === 2", "color('saddlebrown')"],    // Ground
+                            ["${classification} === 3", "color('lawngreen')"],      // Low Vegetation
+                            ["${classification} === 4", "color('green')"],          // Medium Vegetation
                             ["${classification} === 5", "color('darkgreen')"],      // High Vegetation
+                            ["${classification} === 6", "color('goldenrod')"],      // Building
+                            ["${classification} === 7", "color('red')"],            // Low Point (noise)
+                            ["${classification} === 9", "color('darkblue')"],       // Water
+                            ["${classification} === 11", "color('dimgray')"],       // Road Surface
+                            ["${classification} === 14", "color('darkorange')"],    // Wire - Conductor
+                            ["${classification} === 15", "color('darkred')"],       // Transmission Tower
+                            ["${classification} === 17", "color('darkkhaki')"],     // Bridge Deck
                             ["${classification} === 21", "color('magenta')"],       // Your custom class
-                            ["${classification} === 1", "color('lightgray')"],  
-                            // Unclassified
-                            ["true", "color('white')"] // Fallback for any other class
+                            ["true", "color('lightgray')"] // Default for Unclassified and others
                         ]
                     },
                     pointSize: currentPointSize
