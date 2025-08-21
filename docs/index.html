@@ -27,6 +27,11 @@
             padding: 5px 10px;
             cursor: pointer;
         }
+        .slider-container {
+            padding: 5px;
+            display: flex;
+            align-items: center;
+        }
     </style>
 </head>
 <body>
@@ -37,6 +42,11 @@
         <button id="rgbBtn">RGB Color</button>
         <button id="classBtn">Classification</button>
         <button id="intensityBtn">Intensity</button>
+        <div class="slider-container">
+            <label for="pointSizeSlider" style="color: white; margin-right: 10px;">Point Size:</label>
+            <input type="range" min="1" max="10" value="2" id="pointSizeSlider">
+            <span id="pointSizeValue" style="color: white; margin-left: 10px;">2</span>
+        </div>
     </div>
 
     <script type="module">
@@ -80,37 +90,39 @@
 
         load3DTileset();
 
-        // --- DEVELOPER TOOL: Point Inspector on '1' + Left-Click (Robust Version) ---
+        // --- DEVELOPER TOOL: Point Inspector on '1' + Left-Click ---
 
-        // Get the canvas element to attach listeners directly to it, solving focus issues.
+        // Get a reference to the camera controller to disable/enable it.
+        const sscController = viewer.scene.screenSpaceCameraController;
         const canvas = viewer.scene.canvas;
-        // Make the canvas focusable to ensure it can receive keyboard events.
-        canvas.setAttribute("tabindex", 0);
-        canvas.focus(); // Set focus to the canvas to begin listening for keyboard events.
+        canvas.setAttribute("tabindex", 0); // Make canvas focusable
+        canvas.focus();
 
         let isOneKeyPressed = false;
         canvas.addEventListener("keydown", (event) => {
             if (event.key === "1") {
                 isOneKeyPressed = true;
+                // Disable camera controls to give the inspector exclusive priority.
+                sscController.enableInputs = false;
             }
         });
         canvas.addEventListener("keyup", (event) => {
             if (event.key === "1") {
                 isOneKeyPressed = false;
+                // Re-enable camera controls when the key is released.
+                sscController.enableInputs = true;
             }
         });
 
         console.log("Hold the '1' key and left-click on points to inspect their properties in the console.");
         const handler = new Cesium.ScreenSpaceEventHandler(canvas);
         handler.setInputAction(function (movement) {
-            // Only run the inspector logic if the '1' key is currently held down.
             if (isOneKeyPressed) {
                 const pickedFeature = viewer.scene.pick(movement.position);
                 if (pickedFeature instanceof Cesium.Cesium3DTileFeature) {
                     console.log("--- Clicked Point Properties ---");
                     const propertyIds = pickedFeature.getPropertyIds();
-                    for (let i = 0; i < propertyIds.length; i++) {
-                        const propertyId = propertyIds[i];
+                    for (const propertyId of propertyIds) {
                         const value = pickedFeature.getProperty(propertyId);
                         console.log(`${propertyId}: ${value}`);
                     }
@@ -118,6 +130,26 @@
                 }
             }
         }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+
+        // --- FEATURE: Point Size Slider ---
+        const pointSizeSlider = document.getElementById('pointSizeSlider');
+        const pointSizeValue = document.getElementById('pointSizeValue');
+
+        pointSizeSlider.addEventListener('input', (event) => {
+            if (!tileset) {
+                return;
+            }
+            const newSize = Number(event.target.value);
+            pointSizeValue.textContent = newSize;
+
+            // Get the current style, or create a new one if it doesn't exist.
+            // This preserves the existing color styling.
+            const currentStyle = tileset.style || new Cesium.Cesium3DTileStyle();
+            currentStyle.pointSize = newSize;
+
+            // Apply the updated style.
+            tileset.style = currentStyle;
+        });
 
         // --- Point Cloud Styling Event Listeners ---
 
