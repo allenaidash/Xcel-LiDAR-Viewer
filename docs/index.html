@@ -32,6 +32,8 @@
             display: flex;
             align-items: center;
         }
+        /* The infoBox CSS is no longer needed as the element is removed */
+        /*
         #infoBox {
             position: absolute;
             bottom: 10px;
@@ -43,6 +45,7 @@
             z-index: 1;
             max-width: 300px;
         }
+        */
         #legend {
             position: absolute;
             bottom: 10px;
@@ -82,10 +85,13 @@
         </div>
     </div>
 
+    <!-- The infoBox HTML is removed -->
+    <!--
     <div id="infoBox">
         <strong>Picked Feature Properties:</strong>
         <div id="infoBoxContent">Click on a point to see its properties.</div>
     </div>
+    -->
 
     <div id="legend" style="display: none;">
         <strong>Classification Legend</strong>
@@ -94,9 +100,9 @@
         <div><span class="legend-color" style="background-color: forestgreen;"></span> High Vegetation</div>
         <div><span class="legend-color" style="background-color: darkorange;"></span> Building</div>
         <div><span class="legend-color" style="background-color: purple;"></span> Low Point / Noise</div>
-        <div><span class="legend-color" style="background-color: white;"></span> Other</div>
         <div><span class="legend-color" style="background-color: blue;"></span> Utility Pole</div>
         <div><span class="legend-color" style="background-color: red;"></span> Utility Wire</div>
+        <div><span class="legend-color" style="background-color: white;"></span> Other</div>
     </div>
 
     <script type="module">
@@ -235,7 +241,8 @@
             }
         });
 
-        // --- FEATURE: Interactive Point Picking ---
+        // The interactive point picking JavaScript is removed
+        /*
         const infoBoxContent = document.getElementById('infoBoxContent');
         const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
 
@@ -260,6 +267,7 @@
             }
             infoBoxContent.innerHTML = content;
         }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+        */
     </script>
 </body>
 </html>
