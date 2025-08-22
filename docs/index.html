@@ -32,6 +32,39 @@
             display: flex;
             align-items: center;
         }
+        #infoBox {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            padding: 10px;
+            background: rgba(42, 42, 42, 0.8);
+            border-radius: 5px;
+            color: white;
+            z-index: 1;
+            max-width: 300px;
+        }
+        #legend {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            padding: 10px;
+            background: rgba(42, 42, 42, 0.8);
+            border-radius: 5px;
+            color: white;
+            z-index: 1;
+        }
+        .legend-color {
+            display: inline-block;
+            width: 15px;
+            height: 15px;
+            margin-right: 5px;
+            vertical-align: middle;
+            border: 1px solid #555;
+        }
+        /* CSS to hide the Cesium logo and attribution */
+        .cesium-viewer-bottom {
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -47,6 +80,23 @@
             <input type="range" min="1" max="10" value="2" id="pointSizeSlider">
             <span id="pointSizeValue" style="color: white; margin-left: 10px;">2</span>
         </div>
+    </div>
+
+    <div id="infoBox">
+        <strong>Picked Feature Properties:</strong>
+        <div id="infoBoxContent">Click on a point to see its properties.</div>
+    </div>
+
+    <div id="legend" style="display: none;">
+        <strong>Classification Legend</strong>
+        <div><span class="legend-color" style="background-color: lightgray;"></span> Unclassified</div>
+        <div><span class="legend-color" style="background-color: #8B4513;"></span> Ground</div>
+        <div><span class="legend-color" style="background-color: forestgreen;"></span> High Vegetation</div>
+        <div><span class="legend-color" style="background-color: darkorange;"></span> Building</div>
+        <div><span class="legend-color" style="background-color: purple;"></span> Low Point / Noise</div>
+        <div><span class="legend-color" style="background-color: white;"></span> Other</div>
+        <div><span class="legend-color" style="background-color: blue;"></span> Utility Pole</div>
+        <div><span class="legend-color" style="background-color: red;"></span> Utility Wire</div>
     </div>
 
     <script type="module">
@@ -149,12 +199,16 @@
                 activeTileset.style = new Cesium.Cesium3DTileStyle({
                     pointSize: currentPointSize
                 });
+                // Hide the legend for RGB view
+                document.getElementById('legend').style.display = 'none';
             }
         });
 
         // --- FEATURE: Classification Styling ---
         document.getElementById('classificationBtn').addEventListener('click', () => {
             if (activeTileset) {
+                // Show the legend for classification view
+                document.getElementById('legend').style.display = 'block';
                 activeTileset.style = new Cesium.Cesium3DTileStyle({
                     color: {
                         conditions: [
@@ -180,6 +234,32 @@
                 });
             }
         });
+
+        // --- FEATURE: Interactive Point Picking ---
+        const infoBoxContent = document.getElementById('infoBoxContent');
+        const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+
+        handler.setInputAction(function (movement) {
+            const pickedFeature = viewer.scene.pick(movement.position);
+            if (!Cesium.defined(pickedFeature)) {
+                infoBoxContent.innerHTML = 'Click on a point to see its properties.';
+                return;
+            }
+
+            let content = '<ul>';
+            const propertyIds = pickedFeature.getPropertyIds();
+            const length = propertyIds.length;
+            if (length === 0) {
+                content = "No properties found for this point."
+            } else {
+                for (let i = 0; i < length; ++i) {
+                    const propertyId = propertyIds[i];
+                    content += `<li><strong>${propertyId}</strong>: ${pickedFeature.getProperty(propertyId)}</li>`;
+                }
+                content += '</ul>';
+            }
+            infoBoxContent.innerHTML = content;
+        }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
     </script>
 </body>
 </html>
